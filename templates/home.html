@@ -1,0 +1,306 @@
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+    <div id="create-update" style="display:none">
+        <h2><span id="createLabel">Add </span><span id="updateLabel">Update </span>Player</h2>
+        <table id="createUpdateForm">
+            <tr>
+                <td>Number </td>
+                <td><input type="text" name="playerNumber" id="idInput"></td>
+            </tr>
+            <tr>
+                <td>Name </td>
+                <td><input type="text" name="playerName"></td>
+            </tr>
+            <tr>
+                <td><label for="position">Position </label></td>
+                <td><select class="form-control form-control-sm" type="text" placeholder=".form-control-sm" id = "position" name="position">
+                    <option value = "Goalkeeper">Goalkeeper</option>
+                    <option value = "Defender">Defender</option>
+                    <option value = "Midfielder">Midfielder</option>
+                    <option value = "Forward">Forward</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Age </td>
+                <td><input type="number" name="age"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="create-button" onclick="doCreate()">Create</button>
+                    <button id="update-button" onclick="doUpdate()">Update</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="display" style="padding-left: 2rem; padding-right: 2rem;">
+        <h2 style="color: white;">Players</h2>
+        <button onClick="showCreate()"">Add Player</button>
+        <button><a href="{{ url_for('logout') }}">Logout</a></button>
+        <p style="color: white; float: right">Welcome back, {{ username }}!</p>
+        <table id="playerTable" class="table table-striped table-bordered table-sortable" style="background-color: white;">
+            <thead style="background-color: darkred;">
+                <tr>
+                    <th><font color = "white">Number</font></th>
+                    <th><font color = "white">Name</font></th>
+                    <th><font color = "white">Position</font></th>
+                    <th><font color = "white">Age</font></th>
+                    <th><font color="white">Update</font></th>
+                    <th><font color="white">Delete</font></th>
+                </tr>
+            </thead>
+            <tbody>
+                <td style="display: none"></td>
+                <td style="display: none"></td>
+                <td style="display: none;"></td>
+                <td style="display: none;"></td>
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <script>
+        function showCreate() {
+            document.getElementById('display').style.display = "none"
+            document.getElementById('update-button').style.display = "none"
+            document.getElementById('create-button').style.display = "block"
+            document.getElementById('create-update').style.display = "block"
+
+            document.getElementById('createLabel').style.display = "inline"
+            document.getElementById('updateLabel').style.display = "none"
+
+        }
+        function showUpdate(thisElem) {
+            var rowElement = thisElem.parentNode.parentNode;
+            player = readPlayerFromRow(rowElement)
+            populateForm(player)
+
+            document.getElementById('display').style.display = "none"
+            document.getElementById('update-button').style.display = "block"
+            document.getElementById('create-button').style.display = "none"
+            document.getElementById('create-update').style.display = "block"
+
+            document.getElementById('createLabel').style.display = "none"
+            document.getElementById('updateLabel').style.display = "inline"
+
+        }
+        function readPlayerFromRow(rowElement) {
+            player = {}
+            player.playerNumber = rowElement.getAttribute("id");
+            player.playerName = rowElement.cells[1].firstChild.textContent
+            player.position = rowElement.cells[2].firstChild.textContent
+            player.age = rowElement.cells[3].firstChild.textContent
+
+            return player
+
+        }
+        function populateForm(player) {
+            var form = document.getElementById('createUpdateForm')
+
+
+            form.querySelector('input[name="playerNumber"]').value = player.playerNumber
+            form.querySelector('input[name="playerNumber"]').disabled = true
+
+            form.querySelector('input[name="playerName"]').value = player.playerName
+            form.querySelector('select[name="position"]').value = player.position
+            form.querySelector('input[name="age"]').value = player.age
+        }
+        function clearForm() {
+            var form = document.getElementById('createUpdateForm')
+
+
+            form.querySelector('input[name="playerNumber"]').value = ''
+            form.querySelector('input[name="playerNumber"]').disabled = false
+
+            form.querySelector('input[name="playerName"]').value = ''
+            form.querySelector('select[name="position"]').value = ''
+            form.querySelector('input[name="age"]').value = ''
+        }
+
+        function doCreate() {
+            console.log("in doCreate")
+            player = getPlayerFromForm()
+            console.log(player)
+            $.ajax({
+                url: "/squad",
+                data: JSON.stringify(player),
+                method: "POST",
+                dataType: "JSON",
+                contentType: "application/json; charset=utf-8",
+                success: function (result) {
+                    console.log(result)
+                    addPlayerToTable(player)
+                    showDisplay()
+                    clearForm()
+
+                },
+                error: function (xhr, status, error) {
+                    console.log("error" + error)
+                    alert("Squad number already in use.\nPlease choose a different number.");
+                }
+            })
+
+        }
+        function doUpdate() {
+            player = getPlayerFromForm()
+            $.ajax({
+                url: "/squad/"+player.playerNumber,
+                data: JSON.stringify(player),
+                method: "PUT",
+                dataType: "JSON",
+                contentType: "application/json; charset=utf-8",
+                success: function (result) {
+                    console.log(result)
+                    updateTableRow(player)
+                    showDisplay()
+                    clearForm()
+
+                },
+                error: function (xhr, status, error) {
+                    console.log("error" + error)
+                }
+            })
+
+        }
+
+        function doDelete(thisElem) {
+            var tableElement = document.getElementById('playerTable');
+            var rowElement = thisElem.parentNode.parentNode;
+            var index = rowElement.rowIndex;
+            playerNumber = rowElement.getAttribute("id");
+            $.ajax({
+                url: "/squad/"+playerNumber,
+                method: "DELETE",
+                dateType: "JSON",
+                success: function (result) {
+                    tableElement.deleteRow(index);
+                },
+                error: function (xhr, status, error) {
+                    console.log(error)
+                }
+            })
+
+        }
+        function updateTableRow(player) {
+            rowElement = document.getElementById(player.playerNumber)
+            rowElement.cells[1].firstChild.textContent = player.playerName
+            rowElement.cells[2].firstChild.textContent = player.position
+            rowElement.cells[3].firstChild.textContent = player.age
+            //console.log("updating table")
+        }
+        function getPlayerFromForm() {
+            var form = document.getElementById('createUpdateForm')
+
+            var player = {}
+            player.playerNumber = form.querySelector('input[name="playerNumber"]').value
+            player.playerName = form.querySelector('input[name="playerName"]').value
+            player.position = form.querySelector('select[name="position"]').value
+            player.age = form.querySelector('input[name="age"]').value
+            console.log(player)
+            return player
+        }
+        function showDisplay() {
+            document.getElementById('display').style.display = "block"
+            document.getElementById('create-update').style.display = "none"
+
+        }
+
+        function populateTable() {
+            //ajax getAll
+            $.ajax({
+                url: '/squad',
+                method: 'GET',
+                datatype: 'JSON',
+                success: function (results) {
+                    for (player of results) {
+                        addPlayerToTable(player)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.log("error " + error + " code:" + status)
+                }
+
+            })
+
+        }
+        function addPlayerToTable(player) {
+            //console.log("working so far")
+            tableElem = document.getElementById("playerTable")
+            rowElem = tableElem.insertRow(-1)
+            rowElem.setAttribute("id", player.playerNumber)
+            cell1 = rowElem.insertCell(0)
+            cell1.innerHTML = player.playerNumber
+            cell2 = rowElem.insertCell(1)
+            cell2.innerHTML = player.playerName
+            cell3 = rowElem.insertCell(2)
+            cell3.innerHTML = player.position
+            cell4 = rowElem.insertCell(3)
+            cell4.innerHTML = player.age
+            cell5 = rowElem.insertCell(4)
+            cell5.innerHTML = '<button onclick="showUpdate(this)">Update</button>'
+            cell6 = rowElem.insertCell(5)
+            cell6.innerHTML = '<button onclick="doDelete(this)">Delete</button>'
+        }
+
+    // https://codepen.io/dcode-software/pen/zYGOrzK
+    // code to make the table sortable
+    function sortTableByColumn(table, column, asc = true) {
+            const dirModifier = asc ? 1 : -1;
+            const tBody = table.tBodies[0];
+            const rows = Array.from(tBody.querySelectorAll("tr"));
+
+            // Sort each row
+            const sortedRows = rows.sort((a, b) => {
+                const aColText = a.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
+                const bColText = b.querySelector(`td:nth-child(${column + 1})`).textContent.trim();
+
+                return aColText > bColText ? (1 * dirModifier) : (-1 * dirModifier);
+            });
+
+            // Remove all existing TRs from the table
+            while (tBody.firstChild) {
+                tBody.removeChild(tBody.firstChild);
+            }
+
+            // Re-add the newly sorted rows
+            tBody.append(...sortedRows);
+
+            // Remember how the column is currently sorted
+            table.querySelectorAll("th").forEach(th => th.classList.remove("th-sort-asc", "th-sort-desc"));
+            table.querySelector(`th:nth-child(${column + 1})`).classList.toggle("th-sort-asc", asc);
+            table.querySelector(`th:nth-child(${column + 1})`).classList.toggle("th-sort-desc", !asc);
+        }
+
+        document.querySelectorAll(".table-sortable th").forEach(headerCell => {
+            headerCell.addEventListener("click", () => {
+                const tableElement = headerCell.parentElement.parentElement.parentElement;
+                const headerIndex = Array.prototype.indexOf.call(headerCell.parentElement.children, headerCell);
+                const currentIsAscending = headerCell.classList.contains("th-sort-asc");
+
+                sortTableByColumn(tableElement, headerIndex, !currentIsAscending);
+            });
+        });
+
+
+
+
+        populateTable()
+
+
+    </script>
+</body>
+
+</html>
