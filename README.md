@@ -40,7 +40,7 @@ mysql = {
 - Open the Flask application on localhost.
 
 # Using the Application
-- You will now be present with a login page.
+- You will now be presented with a login page.
 - Before logging in an account must be registered.
 - Click Register
 - Enter username and password and then click register.
