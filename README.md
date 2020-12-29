@@ -27,7 +27,8 @@ The code for making the player table sortable is from [codepen.io](https://codep
 - Run initdb.sql in mysql to create required database and tables.
 - Create dbconfig.py in project directory containing the following code:
 
-```mysql = {
+```
+mysql = {
     'host': "localhost",
     'user': 'root',
     'password': 'alligator3',
