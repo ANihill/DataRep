@@ -30,8 +30,8 @@ The code for making the player table sortable is from [codepen.io](https://codep
 ```
 mysql = {
     'host': "localhost",
-    'user': 'root',
-    'password': 'alligator3',
+    'user': '', # your own username goes here 
+    'password': '', # your own password goes here
     'database': 'team'
 }
 ```
